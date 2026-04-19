@@ -34,6 +34,6 @@ pytest tests/ -v
 
 ## Dataset
 
-UCI Bank Marketing — https://archive.ics.uci.edu/ml/datasets/bank+marketing
+UCI Bank Marketing : https://archive.ics.uci.edu/ml/datasets/bank+marketing
 
 Downloaded automatically on first run.
