@@ -27,8 +27,7 @@ def compute_psi_single_feature(reference, current):
 
 def detect_psi_drift(reference_data, stream_data):
     """
-    Slide a window over stream_data and compute mean PSI across all features.
-    Returns per-window PSI scores and drift flags based on configured thresholds.
+    compute mean PSI across all features.
     """
     window_size = config.STREAM_WINDOW_SIZE
     n_windows = len(stream_data) // window_size

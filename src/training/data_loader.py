@@ -78,7 +78,7 @@ def _split_dataframe(df):
         stratify=y
     )
 
-    # Class imbalance is heavy (~11% positive), SMOTE balances training set only
+    # Class imbalance (~11% positive), SMOTE balances training set only
     smote = SMOTE(random_state=config.RANDOM_STATE)
     X_train_balanced, y_train_balanced = smote.fit_resample(X_train, y_train)
 

@@ -25,7 +25,7 @@ def compute_mean_shap_vector(explainer, window_data):
     """Returns the mean absolute SHAP value per feature for a window of samples."""
     shap_values = explainer.shap_values(window_data)
 
-    # TreeExplainer returns a list [class0, class1] for classifiers
+    # TreeExplainer returns a list 
     if isinstance(shap_values, list):
         shap_values = shap_values[1]
 
@@ -38,11 +38,6 @@ def cosine_distance(vector_a, vector_b):
 
 
 def detect_shap_drift(model, reference_data, stream_data):
-    """
-    Slide a window over stream_data and compare its mean SHAP vector
-    against the reference SHAP vector using cosine distance.
-    Returns per-window distances and a boolean drift flag array.
-    """
     explainer = build_explainer(model, reference_data)
     reference_shap = compute_mean_shap_vector(explainer, reference_data)
 

@@ -9,7 +9,6 @@ log = logging.getLogger(__name__)
 
 
 def build_ground_truth(n_windows):
-    """Windows before drift_start are clean, everything after is drifted."""
     drift_window = int(n_windows * config.DRIFT_START_FRAC)
     ground_truth = np.zeros(n_windows, dtype=bool)
     ground_truth[drift_window:] = True

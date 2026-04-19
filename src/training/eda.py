@@ -168,7 +168,7 @@ def plot_radar_chart(results):
 
 
 def plot_feature_importance(results, feature_names):
-    # only tree-based models expose feature_importances_
+    # only fortree-based models
     tree_models = {
         name: data["model"]
         for name, data in results.items()

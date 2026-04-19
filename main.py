@@ -122,7 +122,7 @@ def export_results(all_summaries):
     export_dir = config.RESULTS_DIR / "paper_export"
     export_dir.mkdir(parents=True, exist_ok=True)
 
-    # combine all drift type summaries into one flat table
+    # combine all drift type summaries into one table
     rows = []
     for drift_type, df in all_summaries.items():
         df = df.copy()
@@ -143,7 +143,7 @@ def export_results(all_summaries):
         label="tab:results"
     )
 
-    # summary json — best detector per criterion
+    # summary json 
     last_summary = list(all_summaries.values())[-1]
     summary = {
         "generated_at":              datetime.now().isoformat(),

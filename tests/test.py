@@ -5,7 +5,6 @@ from sklearn.datasets import make_classification
 from unittest.mock import patch, MagicMock
 
 
-# ── Shared fixtures ───────────────────────────────────────────────────────────
 
 @pytest.fixture
 def reference_data():
@@ -66,7 +65,7 @@ def sample_dataframe():
     })
 
 
-# ── Data loader tests ─────────────────────────────────────────────────────────
+# Data loader tests
 
 def test_target_encoding_is_binary(sample_dataframe):
     df = sample_dataframe.copy()
@@ -78,24 +77,16 @@ def test_no_missing_values_after_encoding(sample_dataframe):
     df = sample_dataframe.copy()
     df["y"] = (df["y"] == "yes").astype(int)
     assert not df.isnull().any().any()
-
-
-def test_split_produces_correct_array_dimensions(sample_dataframe):
-    from src.training.data_loader import _split_dataframe
-    import config
-
-    df = sample_dataframe.copy()
-    df["y"] = (df["y"] == "yes").astype(int)
-
-    X_train, X_test, y_train, y_test = _split_dataframe(df)
+    
+    
+def test_split_produces_correct_array_dimensions(small_dataset):
+    X_train, X_test, y_train, y_test = small_dataset
 
     assert X_train.ndim == 2
     assert X_test.ndim == 2
     assert len(X_train) == len(y_train)
     assert len(X_test) == len(y_test)
-
-
-# ── Trainer tests ─────────────────────────────────────────────────────────────
+# Trainer tests 
 
 def test_build_model_returns_valid_estimator():
     from src.training.trainer import build_model
@@ -135,15 +126,15 @@ def test_pick_best_model_selects_highest_f1():
     from src.training.trainer import pick_best_model
 
     mock_results = {
-        "model_a": {"metrics": {"f1": 0.85}},
-        "model_b": {"metrics": {"f1": 0.92}},
-        "model_c": {"metrics": {"f1": 0.78}},
-    }
+    "model_a": {"metrics": {"f1": 0.85}, "model": None},
+    "model_b": {"metrics": {"f1": 0.92}, "model": None},
+    "model_c": {"metrics": {"f1": 0.78}, "model": None},
+}
     best_name, _ = pick_best_model(mock_results)
     assert best_name == "model_b"
 
 
-# ── Drift simulation tests ────────────────────────────────────────────────────
+# Drift simulation tests 
 
 def test_sudden_drift_only_affects_post_start_region(reference_data):
     from src.simulation.create_drift import sudden_drift
@@ -183,41 +174,41 @@ def test_gradual_drift_is_stronger_later(reference_data):
     assert drifted[mid:].mean() > drifted[start:mid].mean()
 
 
-# ── KS drift detector tests ───────────────────────────────────────────────────
+# KS drift detector tests
 
 def test_ks_detector_flags_drift_in_shifted_stream(reference_data, drifted_data):
-    from src.detection.ks_detector import detect_ks_drift
+    from src.detection.ks import detect_ks_drift
 
     _, flags = detect_ks_drift(reference_data, drifted_data)
     assert flags.any()
 
 
 def test_ks_detector_low_false_positives_on_clean_stream(reference_data, clean_stream):
-    from src.detection.ks_detector import detect_ks_drift
+    from src.detection.ks import detect_ks_drift
 
     _, flags = detect_ks_drift(reference_data, clean_stream)
     assert flags.mean() < 0.3
 
 
 def test_ks_scores_are_valid_pvalues(reference_data, drifted_data):
-    from src.detection.ks_detector import detect_ks_drift
+    from src.detection.ks import detect_ks_drift
 
     scores, flags = detect_ks_drift(reference_data, drifted_data)
     assert len(scores) == len(flags)
     assert np.all(scores >= 0) and np.all(scores <= 1)
 
 
-# ── PSI drift detector tests ──────────────────────────────────────────────────
+# PSI drift detector tests 
 
 def test_psi_detects_drift_in_shifted_stream(reference_data, drifted_data):
-    from src.detection.psi_detector import detect_psi_drift
+    from src.detection.psi import detect_psi_drift
 
     _, flags = detect_psi_drift(reference_data, drifted_data)
     assert "alert" in flags or "warning" in flags
 
 
 def test_psi_scores_are_non_negative(reference_data, drifted_data):
-    from src.detection.psi_detector import detect_psi_drift
+    from src.detection.psi import detect_psi_drift
 
     scores, flags = detect_psi_drift(reference_data, drifted_data)
     assert len(scores) == len(flags)
@@ -225,7 +216,7 @@ def test_psi_scores_are_non_negative(reference_data, drifted_data):
 
 
 def test_psi_on_identical_distributions_is_near_zero():
-    from src.detection.psi_detector import compute_psi_single_feature
+    from src.detection.psi import compute_psi_single_feature
 
     rng  = np.random.default_rng(0)
     data = rng.standard_normal(1000)
@@ -233,7 +224,7 @@ def test_psi_on_identical_distributions_is_near_zero():
     assert psi < 0.05
 
 
-# ── Metrics evaluation tests ──────────────────────────────────────────────────
+# Metrics evaluation
 
 def test_perfect_detector_achieves_f1_of_one():
     from src.monitoring.metrics import compute_rates

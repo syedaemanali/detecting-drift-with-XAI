@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 
 app = FastAPI()
 
-# one gauge per metric per detector, Prometheus scrapes these
+# one gauge per metric per detector
 GAUGES = {
     "latency":   Gauge("drift_detection_latency",   "Detection latency in windows", ["detector"]),
     "fpr":       Gauge("drift_fpr",                 "False positive rate",          ["detector"]),

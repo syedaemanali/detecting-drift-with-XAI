@@ -12,7 +12,7 @@ def _drift_start_index(data):
 
 
 def sudden_drift(data):
-    """Abrupt shift at drift_start — mean jumps by drift_magnitude * std instantly."""
+    """mean jumps by drift_magnitude * std instantly."""
     out = data.copy().astype(float)
     start = _drift_start_index(out)
     feature_std = np.std(out[:start], axis=0)
@@ -22,13 +22,12 @@ def sudden_drift(data):
 
 
 def gradual_drift(data):
-    """Linearly ramps up from zero shift at drift_start to full magnitude at the end."""
+    """from zero shift at drift_start to full magnitude at the end."""
     out = data.copy().astype(float)
     start = _drift_start_index(out)
     feature_std = np.std(out[:start], axis=0)
     n_drifting = len(out) - start
 
-    # ramp goes from 0 to drift_magnitude over the drifting window
     ramp = np.linspace(0, config.DRIFT_MAGNITUDE, n_drifting)
     out[start:] += ramp[:, np.newaxis] * feature_std
     log.info("Gradual drift injected from index %d with linear ramp", start)
@@ -36,7 +35,7 @@ def gradual_drift(data):
 
 
 def recurring_drift(data, period=100, drift_fraction=0.5):
-    """Drift turns on and off in cycles after drift_start. period controls cycle length."""
+    """Drift turns on and off in cycles after drift_start"""
     out = data.copy().astype(float)
     start = _drift_start_index(out)
     feature_std = np.std(out[:start], axis=0)
@@ -52,7 +51,7 @@ def recurring_drift(data, period=100, drift_fraction=0.5):
 
 
 def incremental_drift(data):
-    """Drift grows sample by sample from drift_start — slowest and hardest to catch."""
+    """Drift grows sample by sample from drift_start"""
     out = data.copy().astype(float)
     start = _drift_start_index(out)
     feature_std = np.std(out[:start], axis=0)
