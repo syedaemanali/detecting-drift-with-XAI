@@ -1,0 +1,190 @@
+{
+  "title": "Drift Detection Pipeline",
+  "uid": "drift-pipeline",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "F1 Score by Detector",
+      "type": "bargauge",
+      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 6 },
+      "targets": [
+        {
+          "expr": "drift_f1",
+          "legendFormat": "{{ detector }}"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "min": 0, "max": 1,
+          "color": { "mode": "palette-classic" },
+          "thresholds": {
+            "steps": [
+              { "color": "#F4A896", "value": 0 },
+              { "color": "#F6C567", "value": 0.5 },
+              { "color": "#A8D5A2", "value": 0.8 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Detection Latency (windows)",
+      "type": "bargauge",
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 6 },
+      "targets": [
+        {
+          "expr": "drift_detection_latency",
+          "legendFormat": "{{ detector }}"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "color": { "mode": "palette-classic" },
+          "thresholds": {
+            "steps": [
+              { "color": "#A8D5A2", "value": 0 },
+              { "color": "#F6C567", "value": 3 },
+              { "color": "#F4A896", "value": 6 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Cost Score by Detector (lower is better)",
+      "type": "bargauge",
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 6 },
+      "targets": [
+        {
+          "expr": "drift_cost_score",
+          "legendFormat": "{{ detector }}"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "color": { "mode": "palette-classic" }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "False Positive Rate Over Time",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 6, "w": 12, "h": 7 },
+      "targets": [
+        {
+          "expr": "drift_fpr",
+          "legendFormat": "{{ detector }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0, "max": 1,
+          "color": { "mode": "palette-classic" }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "False Negative Rate Over Time",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 6, "w": 12, "h": 7 },
+      "targets": [
+        {
+          "expr": "drift_fnr",
+          "legendFormat": "{{ detector }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0, "max": 1,
+          "color": { "mode": "palette-classic" }
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Precision by Detector",
+      "type": "gauge",
+      "gridPos": { "x": 0, "y": 13, "w": 8, "h": 6 },
+      "targets": [
+        {
+          "expr": "drift_precision",
+          "legendFormat": "{{ detector }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0, "max": 1,
+          "thresholds": {
+            "steps": [
+              { "color": "#F4A896", "value": 0 },
+              { "color": "#F6C567", "value": 0.5 },
+              { "color": "#A8D5A2", "value": 0.8 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "Recall by Detector",
+      "type": "gauge",
+      "gridPos": { "x": 8, "y": 13, "w": 8, "h": 6 },
+      "targets": [
+        {
+          "expr": "drift_recall",
+          "legendFormat": "{{ detector }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0, "max": 1,
+          "thresholds": {
+            "steps": [
+              { "color": "#F4A896", "value": 0 },
+              { "color": "#F6C567", "value": 0.5 },
+              { "color": "#A8D5A2", "value": 0.8 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Pipeline Status",
+      "type": "stat",
+      "gridPos": { "x": 16, "y": 13, "w": 8, "h": 6 },
+      "targets": [
+        {
+          "expr": "count(drift_f1)",
+          "legendFormat": "Active Detectors"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "#7B9CDA" }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+# plots and generated outputs
+plots/
+results/
+plots/*.png
+results/*.csv
+results/*.json
+results/*.tex
+
+# data
+data/raw/
+
+# python cache
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+
+
+
+kaggle.json
