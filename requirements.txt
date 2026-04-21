@@ -16,6 +16,7 @@ requests==2.31.0
 
 # experiment tracking
 mlflow==2.12.2
+protobuf==4.25.8
 
 # monitoring
 fastapi==0.111.0
@@ -29,3 +30,4 @@ seaborn==0.13.2
 # utils
 joblib==1.4.2
 scipy==1.13.0
+python-dateutil==2.9.0.post0
