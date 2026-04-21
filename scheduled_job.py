@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import datetime as dt
 import fcntl
-import os
 import pathlib
 import subprocess
 import sys
@@ -34,16 +33,24 @@ def append_log(message: str) -> None:
 
 def run_pipeline() -> int:
     cmd = get_python_command() + [str(MAIN_PATH)]
+    append_log(f"Runner started from ROOT={ROOT}")
     append_log(f"Starting pipeline: {' '.join(cmd)}")
 
-    # Use repo root as cwd so relative paths in project code behave consistently.
-    proc = subprocess.run(
-        cmd,
-        cwd=str(ROOT),
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=str(ROOT),
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=3600,
+        )
+    except subprocess.TimeoutExpired:
+        append_log("ERROR: Pipeline timed out after 3600 seconds")
+        return 1
+    except Exception as exc:
+        append_log(f"ERROR: Failed to start pipeline: {exc}")
+        return 1
 
     if proc.stdout:
         append_log("STDOUT:\n" + proc.stdout.strip())
@@ -61,7 +68,6 @@ def main() -> int:
 
     with LOCK_PATH.open("w", encoding="utf-8") as lock_file:
         try:
-            # Non-blocking lock: if another run is active, skip this trigger.
             fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError:
             append_log("Another scheduled run is active; skipping this trigger")
