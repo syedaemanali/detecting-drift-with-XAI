@@ -16,14 +16,18 @@ def build_ground_truth(n_windows):
 
 
 def normalize_flags(flags):
-    # PSI returns "ok"/"warning"/"alert" strings, everything else is already boolean
+    # PSI returns "ok"/"warning"/"alert" strings.
+    # Only "alert" is treated as a positive drift detection.
     if flags.dtype.kind in ("U", "S", "O"):
-        return flags != "ok"
+        return flags == "alert"
     return flags.astype(bool)
 
 
 def detection_latency(ground_truth, predicted_flags):
     """Windows between when drift actually started and when detector first flagged it."""
+    if not ground_truth.any():
+        return None
+
     true_start = np.argmax(ground_truth)
     detected_at = np.argmax(predicted_flags)
 
@@ -79,8 +83,13 @@ def evaluate_detector(detector_name, flags, ground_truth):
     return result
 
 
-def evaluate_all_detectors(detector_results, n_windows):
-    ground_truth = build_ground_truth(n_windows)
+def evaluate_all_detectors(detector_results, n_windows, ground_truth=None):
+    if ground_truth is None:
+        ground_truth = build_ground_truth(n_windows)
+    else:
+        ground_truth = np.asarray(ground_truth, dtype=bool)
+        if len(ground_truth) != n_windows:
+            raise ValueError("ground_truth length must equal n_windows")
     rows = []
 
     for detector_name, flags in detector_results.items():

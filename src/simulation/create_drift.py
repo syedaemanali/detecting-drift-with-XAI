@@ -11,6 +11,26 @@ def _drift_start_index(data):
     return int(len(data) * config.DRIFT_START_FRAC)
 
 
+def sample_drift_mask(n_samples, drift_type, period=100, drift_fraction=0.5):
+    """Boolean mask indicating which samples belong to drifted segments."""
+    start = int(n_samples * config.DRIFT_START_FRAC)
+    mask = np.zeros(n_samples, dtype=bool)
+
+    if drift_type in ("sudden", "gradual", "incremental"):
+        mask[start:] = True
+        return mask
+
+    if drift_type == "recurring":
+        drift_on_samples = int(period * drift_fraction)
+        for i in range(start, n_samples):
+            position_in_cycle = (i - start) % period
+            if position_in_cycle < drift_on_samples:
+                mask[i] = True
+        return mask
+
+    raise ValueError(f"Unknown drift type {drift_type}, choose from {list(DRIFT_FUNCTIONS)}")
+
+
 def sudden_drift(data):
     """mean jumps by drift_magnitude * std instantly."""
     out = data.copy().astype(float)
