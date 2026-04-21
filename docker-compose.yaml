@@ -1,5 +1,89 @@
-services:
 
+#services:
+#
+#  mlflow:
+#    image: ghcr.io/mlflow/mlflow:v2.12.2
+#    container_name: mlflow_server
+#    ports:
+#      - "5000:5000"
+#    volumes:
+#      - mlflow_data:/mlflow
+#    command: >
+#      mlflow server
+#      --host 0.0.0.0
+#      --port 5000
+#      --backend-store-uri sqlite:///mlflow/mlflow.db
+#      --default-artifact-root /mlflow/artifacts
+#    networks:
+#      - monitoring
+#
+#  pipeline:
+#    build: .
+#    container_name: pipeline
+#    depends_on:
+#      mlflow:
+#        condition: service_started
+#    environment:
+#      - MLFLOW_TRACKING_URI=http://mlflow:5000
+#    volumes:
+#      - ./data:/app/data
+#      - ./models:/app/models
+#      - ./results:/app/results
+#      - ./plots:/app/plots
+#    command: tail -f /dev/null
+#    networks:
+#      - monitoring
+#
+#  metrics_api:
+#    build: .
+#    container_name: metrics_api
+#    depends_on:
+#      - pipeline
+#    ports:
+#      - "8000:8000"
+#    volumes:
+#      - ./results:/app/results
+#    command: uvicorn src.monitoring.app:app --host 0.0.0.0 --port 8000
+#    networks:
+#      - monitoring
+#
+#  prometheus:
+#    image: prom/prometheus:v2.51.2
+#    container_name: prometheus
+#    ports:
+#      - "9090:9090"
+#    volumes:
+#      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+#    networks:
+#      - monitoring
+#
+#  grafana:
+#    image: grafana/grafana:10.4.2
+#    container_name: grafana
+#    ports:
+#      - "3000:3000"
+#    environment:
+#      - GF_SECURITY_ADMIN_PASSWORD=admin
+#      - GF_USERS_ALLOW_SIGN_UP=false
+#    volumes:
+#      - grafana_data:/var/lib/grafana
+#      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+#      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+#    depends_on:
+#      - prometheus
+#    networks:
+#      - monitoring
+#
+#volumes:
+#  mlflow_data:
+#  grafana_data:
+#
+#networks:
+#  monitoring:
+#    driver: bridge
+
+# for deplyoment 
+services:
   mlflow:
     image: ghcr.io/mlflow/mlflow:v2.12.2
     container_name: mlflow_server
@@ -11,38 +95,9 @@ services:
       mlflow server
       --host 0.0.0.0
       --port 5000
-      --backend-store-uri sqlite:///mlflow/mlflow.db
+      --backend-store-uri sqlite:////mlflow/mlflow.db
       --default-artifact-root /mlflow/artifacts
-    networks:
-      - monitoring
-
-  pipeline:
-    build: .
-    container_name: pipeline
-    depends_on:
-      mlflow:
-        condition: service_started
-    environment:
-      - MLFLOW_TRACKING_URI=http://mlflow:5000
-    volumes:
-      - ./data:/app/data
-      - ./models:/app/models
-      - ./results:/app/results
-      - ./plots:/app/plots
-    command: tail -f /dev/null
-    networks:
-      - monitoring
-
-  metrics_api:
-    build: .
-    container_name: metrics_api
-    depends_on:
-      - pipeline
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./results:/app/results
-    command: uvicorn src.monitoring.app:app --host 0.0.0.0 --port 8000
+    restart: unless-stopped
     networks:
       - monitoring
 
@@ -53,6 +108,7 @@ services:
       - "9090:9090"
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    restart: unless-stopped
     networks:
       - monitoring
 
@@ -70,6 +126,7 @@ services:
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
     depends_on:
       - prometheus
+    restart: unless-stopped
     networks:
       - monitoring
 
