@@ -37,7 +37,26 @@ def cosine_distance(vector_a, vector_b):
     return cosine(vector_a, vector_b)
 
 
-def detect_shap_drift(model, reference_data, stream_data):
+def _apply_temporal_confirmation(boolean_flags):
+    window = config.TEMPORAL_CONFIRM_WINDOW
+    min_alerts = config.TEMPORAL_CONFIRM_MIN_ALERTS
+
+    smoothed = []
+    for i in range(len(boolean_flags)):
+        start = max(0, i - window + 1)
+        votes = np.sum(boolean_flags[start : i + 1])
+        smoothed.append(votes >= min_alerts)
+    return np.array(smoothed, dtype=bool)
+
+
+def detect_shap_drift(
+    model,
+    reference_data,
+    stream_data,
+    threshold=None,
+    apply_confirmation=True,
+    warmup_windows=0,
+):
     explainer = build_explainer(model, reference_data)
     reference_shap = compute_mean_shap_vector(explainer, reference_data)
 
@@ -45,7 +64,9 @@ def detect_shap_drift(model, reference_data, stream_data):
     n_windows = len(stream_data) // window_size
 
     distances = []
-    drift_flags = []
+    raw_flags = []
+
+    active_threshold = config.SHAP_DRIFT_THRESHOLD if threshold is None else threshold
 
     for i in range(n_windows):
         window = stream_data[i * window_size : (i + 1) * window_size]
@@ -53,8 +74,16 @@ def detect_shap_drift(model, reference_data, stream_data):
         dist = cosine_distance(reference_shap, window_shap)
 
         distances.append(dist)
-        drift_flags.append(dist > config.SHAP_DRIFT_THRESHOLD)
+        raw_flags.append(dist > active_threshold)
 
-        log.info("SHAP window %d cosine distance %.4f drift %s", i, dist, drift_flags[-1])
+    drift_flags = np.array(raw_flags, dtype=bool)
+    if apply_confirmation:
+        drift_flags = _apply_temporal_confirmation(drift_flags)
+
+    if warmup_windows > 0:
+        drift_flags[:warmup_windows] = False
+
+    for i, (dist, flag) in enumerate(zip(distances, drift_flags)):
+        log.info("SHAP window %d cosine distance %.4f drift %s", i, dist, flag)
 
     return np.array(distances), np.array(drift_flags), reference_shap

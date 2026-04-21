@@ -46,18 +46,31 @@ def evaluate(model, X_test, y_test):
     }
 
 
-def train_all_models(X_train, X_test, y_train, y_test):
+def train_all_models(
+    X_train,
+    X_test,
+    y_train,
+    y_test,
+    experiment_name=None,
+    model_name_suffix=None,
+    run_name_prefix=None,
+):
     config.MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
     mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
-    mlflow.set_experiment(config.MLFLOW_EXPERIMENT_NAME)
+    mlflow.set_experiment(experiment_name or config.MLFLOW_EXPERIMENT_NAME)
 
     results = {}
+    suite_label = model_name_suffix or "baseline"
+
+    log.info("Starting model suite: %s", suite_label)
 
     for model_name in config.MODELS_TO_TRAIN:
-        log.info("Training %s", model_name)
+        log.info("[%s] Training %s", suite_label, model_name)
 
-        with mlflow.start_run(run_name=model_name):
+        run_name = model_name if not run_name_prefix else f"{run_name_prefix}_{model_name}"
+
+        with mlflow.start_run(run_name=run_name):
             model = build_model(model_name)
             model.fit(X_train, y_train)
 
@@ -68,19 +81,28 @@ def train_all_models(X_train, X_test, y_train, y_test):
             mlflow.log_metrics(loggable)
 
             # MLflow auto-increments version on each registration
+            registered_name = f"{config.MLFLOW_MODEL_NAME}_{model_name}"
+            if model_name_suffix:
+                registered_name = f"{registered_name}_{model_name_suffix}"
+
             mlflow.sklearn.log_model(
                 model,
                 artifact_path=model_name,
-                registered_model_name=f"{config.MLFLOW_MODEL_NAME}_{model_name}",
+                registered_model_name=registered_name,
             )
 
             joblib.dump(model, config.MODELS_DIR / f"{model_name}.joblib")
             results[model_name] = {"model": model, "metrics": metrics}
 
             log.info(
-                "%s done with F1 %.4f and AUC %.4f",
-                model_name, metrics["f1"], metrics["roc_auc"]
+                "[%s] %s done with F1 %.4f and AUC %.4f",
+                suite_label,
+                model_name,
+                metrics["f1"],
+                metrics["roc_auc"]
             )
+
+    log.info("Finished model suite: %s", suite_label)
 
     return results
 
