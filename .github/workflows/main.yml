@@ -1,0 +1,174 @@
+name: MLOps Pipeline CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_full_experiment:
+        description: "Run full drift experiment"
+        required: false
+        default: "false"
+
+env:
+  PYTHON_VERSION: "3.11"
+  DOCKER_IMAGE: "drift-detection-pipeline"
+
+jobs:
+
+  lint:
+    name: Lint and Style
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install lint tools
+        run: pip install ruff
+
+      - name: Check linting
+        run: ruff check src/ main.py config.py
+
+      - name: Check formatting
+        run: ruff format --check src/ main.py config.py
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt pytest pytest-cov
+
+      - name: Run tests
+        run: pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          file: coverage.xml
+          fail_ci_if_error: false
+
+  integration:
+    name: Integration Test
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run pipeline smoke test
+        env:
+          MLFLOW_TRACKING_URI: ./mlruns
+        run: python main.py
+
+      - name: Verify outputs exist
+        run: |
+          test -f results/metrics_summary.csv || exit 1
+          test -d plots || exit 1
+          test -f results/paper_export/metrics_table.csv || exit 1
+          echo "All expected outputs present"
+
+      - name: Upload experiment artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: experiment-outputs-${{ github.sha }}
+          path: |
+            results/
+            plots/
+            mlruns/
+          retention-days: 7
+
+  docker:
+    name: Docker Build and Push
+    runs-on: ubuntu-latest
+    needs: integration
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        if: github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: ${{ github.ref == 'refs/heads/main' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  full_experiment:
+    name: Full Experiment Run
+    runs-on: ubuntu-latest
+    needs: docker
+    if: >
+      github.ref == 'refs/heads/main' ||
+      github.event.inputs.run_full_experiment == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run full experiment
+        env:
+          MLFLOW_TRACKING_URI: ./mlruns
+        run: python main.py
+
+      - name: Upload full results
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-results-${{ github.sha }}
+          path: |
+            results/
+            plots/
+          retention-days: 30
