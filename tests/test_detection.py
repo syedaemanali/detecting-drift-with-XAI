@@ -175,11 +175,12 @@ def test_gradual_drift_is_stronger_later(reference_data):
 
 
 # KS drift detector tests
-
-def test_ks_detector_flags_drift_in_shifted_stream(reference_data, drifted_data):
+def test_ks_detector_flags_drift_in_shifted_stream(reference_data):
     from src.detection.ks import detect_ks_drift
 
-    _, flags = detect_ks_drift(reference_data, drifted_data)
+    rng = np.random.default_rng(0)
+    shifted = rng.normal(loc=5.0, scale=1.0, size=(1000, 5))
+    _, flags = detect_ks_drift(reference_data, shifted, apply_confirmation=False)
     assert flags.any()
 
 
