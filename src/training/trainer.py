@@ -3,7 +3,6 @@ import joblib
 
 import mlflow
 import mlflow.sklearn
-import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (

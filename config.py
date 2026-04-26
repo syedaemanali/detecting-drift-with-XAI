@@ -1,5 +1,5 @@
 from pathlib import Path
-
+import os 
 ROOT_DIR        = Path(__file__).parent
 DATA_DIR        = ROOT_DIR / "data"
 RAW_DATA_PATH   = DATA_DIR / "bank-additional-full.csv"
@@ -55,7 +55,6 @@ MODEL_PARAMS = {
         "verbose": -1
     },
 }
-import os
 MLFLOW_TRACKING_URI = os.environ.get("MLFLOW_TRACKING_URI", "http://localhost:5000")
 MLFLOW_EXPERIMENT_NAME = "explainability-drift"
 MLFLOW_MODEL_NAME      = "bank-marketing-classifier"
