@@ -7,7 +7,9 @@ from sklearn.metrics import ConfusionMatrixDisplay
 
 import config
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(levelname)s  %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s  %(levelname)s  %(message)s"
+)
 log = logging.getLogger(__name__)
 
 PASTEL = list(config.PALETTE.values())
@@ -63,8 +65,14 @@ def plot_correlation_heatmap(X, feature_names):
 
     fig, ax = plt.subplots(figsize=(14, 11))
     sns.heatmap(
-        corr, annot=True, fmt=".2f", cmap="coolwarm",
-        center=0, linewidths=0.5, ax=ax, annot_kws={"size": 7}
+        corr,
+        annot=True,
+        fmt=".2f",
+        cmap="coolwarm",
+        center=0,
+        linewidths=0.5,
+        ax=ax,
+        annot_kws={"size": 7},
     )
     ax.set_title("Feature Correlation Heatmap", fontsize=13)
     fig.patch.set_facecolor(config.PALETTE["background"])
@@ -81,8 +89,7 @@ def plot_feature_vs_target(X, y, feature_names):
     for i, feature in enumerate(feature_names):
         df = pd.DataFrame({"value": X[:, i], "target": y})
         df.groupby("target")["value"].plot(
-            kind="kde", ax=axes[i],
-            color=["#F4A896", "#7B9CDA"], legend=True
+            kind="kde", ax=axes[i], color=["#F4A896", "#7B9CDA"], legend=True
         )
         axes[i].set_title(feature, fontsize=9)
         axes[i].set_facecolor(config.PALETTE["background"])
@@ -125,8 +132,13 @@ def plot_model_comparison(results):
     for i, model_name in enumerate(model_names):
         values = [results[model_name]["metrics"][m] for m in metrics_to_plot]
         offset = (i - len(model_names) / 2) * bar_width + bar_width / 2
-        bars = ax.bar(x + offset, values, width=bar_width, label=model_name.replace("_", " ").title(),
-                      color=PASTEL[i % len(PASTEL)])
+        bars = ax.bar(
+            x + offset,
+            values,
+            width=bar_width,
+            label=model_name.replace("_", " ").title(),
+            color=PASTEL[i % len(PASTEL)],
+        )
         ax.bar_label(bars, fmt="%.2f", padding=2, fontsize=7)
 
     ax.set_xticks(x)
@@ -154,11 +166,18 @@ def plot_radar_chart(results):
     for i, model_name in enumerate(model_names):
         values = [results[model_name]["metrics"][m] for m in metrics_to_plot]
         values += values[:1]
-        ax.plot(angles, values, linewidth=2, label=model_name.replace("_", " ").title(),
-                color=PASTEL[i % len(PASTEL)])
+        ax.plot(
+            angles,
+            values,
+            linewidth=2,
+            label=model_name.replace("_", " ").title(),
+            color=PASTEL[i % len(PASTEL)],
+        )
         ax.fill(angles, values, alpha=0.15, color=PASTEL[i % len(PASTEL)])
 
-    ax.set_thetagrids(np.degrees(angles[:-1]), [m.replace("_", " ").title() for m in metrics_to_plot])
+    ax.set_thetagrids(
+        np.degrees(angles[:-1]), [m.replace("_", " ").title() for m in metrics_to_plot]
+    )
     ax.set_ylim(0, 1)
     ax.set_title("Model Radar Chart", fontsize=13, pad=20)
     ax.legend(loc="upper right", bbox_to_anchor=(1.3, 1.1))
@@ -190,10 +209,12 @@ def plot_feature_importance(results, feature_names):
         ax.barh(
             [feature_names[i] for i in sorted_idx],
             importances[sorted_idx],
-            color="#7B9CDA"
+            color="#7B9CDA",
         )
         ax.invert_yaxis()
-        ax.set_title(f"Feature Importance — {model_name.replace('_', ' ').title()}", fontsize=11)
+        ax.set_title(
+            f"Feature Importance — {model_name.replace('_', ' ').title()}", fontsize=11
+        )
         ax.set_facecolor(config.PALETTE["background"])
 
     fig.patch.set_facecolor(config.PALETTE["background"])

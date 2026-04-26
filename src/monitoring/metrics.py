@@ -4,7 +4,9 @@ import pandas as pd
 
 import config
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(levelname)s  %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s  %(levelname)s  %(message)s"
+)
 log = logging.getLogger(__name__)
 
 
@@ -48,7 +50,11 @@ def compute_rates(ground_truth, predicted_flags):
     fnr = fn / (fn + tp) if (fn + tp) > 0 else 0.0
     precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
     recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-    f1 = (2 * precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
+    f1 = (
+        (2 * precision * recall) / (precision + recall)
+        if (precision + recall) > 0
+        else 0.0
+    )
 
     return {"fpr": fpr, "fnr": fnr, "precision": precision, "recall": recall, "f1": f1}
 
@@ -65,19 +71,24 @@ def evaluate_detector(detector_name, flags, ground_truth):
     cost = cost_score(rates["fpr"], rates["fnr"])
 
     result = {
-        "detector":  detector_name,
-        "latency":   latency if latency is not None else -1,
-        "fpr":       round(rates["fpr"], 4),
-        "fnr":       round(rates["fnr"], 4),
+        "detector": detector_name,
+        "latency": latency if latency is not None else -1,
+        "fpr": round(rates["fpr"], 4),
+        "fnr": round(rates["fnr"], 4),
         "precision": round(rates["precision"], 4),
-        "recall":    round(rates["recall"], 4),
-        "f1":        round(rates["f1"], 4),
-        "cost":      round(cost, 4),
+        "recall": round(rates["recall"], 4),
+        "f1": round(rates["f1"], 4),
+        "cost": round(cost, 4),
     }
 
     log.info(
         "%s latency %s windows  F1 %.4f  FPR %.4f  FNR %.4f  cost %.4f",
-        detector_name, latency, rates["f1"], rates["fpr"], rates["fnr"], cost
+        detector_name,
+        latency,
+        rates["f1"],
+        rates["fpr"],
+        rates["fnr"],
+        cost,
     )
 
     return result

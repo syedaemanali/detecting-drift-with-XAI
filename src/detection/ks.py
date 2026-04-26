@@ -4,7 +4,9 @@ from scipy import stats
 
 import config
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(levelname)s  %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s  %(levelname)s  %(message)s"
+)
 log = logging.getLogger(__name__)
 
 
@@ -65,9 +67,6 @@ def detect_ks_drift(
         drift_flags[:warmup_windows] = False
 
     for i, (mean_pvalue, any_drift) in enumerate(zip(ks_scores, drift_flags)):
-        log.info(
-            "KS window %d mean pvalue %.4f drift %s",
-            i, mean_pvalue, any_drift
-        )
+        log.info("KS window %d mean pvalue %.4f drift %s", i, mean_pvalue, any_drift)
 
     return np.array(ks_scores), np.array(drift_flags)

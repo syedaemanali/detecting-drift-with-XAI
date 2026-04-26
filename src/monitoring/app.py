@@ -6,20 +6,24 @@ from starlette.responses import Response
 
 import config
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(levelname)s  %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s  %(levelname)s  %(message)s"
+)
 log = logging.getLogger(__name__)
 
 app = FastAPI()
 
 # one gauge per metric per detector
 GAUGES = {
-    "latency":   Gauge("drift_detection_latency",   "Detection latency in windows", ["detector"]),
-    "fpr":       Gauge("drift_fpr",                 "False positive rate",          ["detector"]),
-    "fnr":       Gauge("drift_fnr",                 "False negative rate",          ["detector"]),
-    "precision": Gauge("drift_precision",            "Precision",                    ["detector"]),
-    "recall":    Gauge("drift_recall",               "Recall",                       ["detector"]),
-    "f1":        Gauge("drift_f1",                   "F1 score",                     ["detector"]),
-    "cost":      Gauge("drift_cost_score",           "Weighted cost score",          ["detector"]),
+    "latency": Gauge(
+        "drift_detection_latency", "Detection latency in windows", ["detector"]
+    ),
+    "fpr": Gauge("drift_fpr", "False positive rate", ["detector"]),
+    "fnr": Gauge("drift_fnr", "False negative rate", ["detector"]),
+    "precision": Gauge("drift_precision", "Precision", ["detector"]),
+    "recall": Gauge("drift_recall", "Recall", ["detector"]),
+    "f1": Gauge("drift_f1", "F1 score", ["detector"]),
+    "cost": Gauge("drift_cost_score", "Weighted cost score", ["detector"]),
 }
 
 

@@ -12,13 +12,19 @@ from src.training.trainer import train_all_models, pick_best_model, save_best_mo
 from src.training.eda import run_full_eda
 from src.simulation.create_drift import apply_drift
 from src.simulation.create_drift import sample_drift_mask
-from src.detection.shap import detect_shap_drift, compute_mean_shap_vector, build_explainer
+from src.detection.shap import (
+    detect_shap_drift,
+    compute_mean_shap_vector,
+    build_explainer,
+)
 from src.detection.psi import detect_psi_drift
 from src.detection.ks import detect_ks_drift
 from src.monitoring.metrics import evaluate_all_detectors
 from src.visualization.plots import run_all_plots
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(levelname)s  %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s  %(levelname)s  %(message)s"
+)
 log = logging.getLogger(__name__)
 
 
@@ -45,7 +51,9 @@ def calibrate_detectors(best_model, reference_data, calibration_stream):
             "warmup_windows": min(config.WARMUP_WINDOWS, calibration_windows),
         }
 
-    pre_drift_windows = max(1, int(len(calibration_stream) * config.DRIFT_START_FRAC) // window_size)
+    pre_drift_windows = max(
+        1, int(len(calibration_stream) * config.DRIFT_START_FRAC) // window_size
+    )
     warmup_windows = min(config.WARMUP_WINDOWS, pre_drift_windows)
     calibration_window_count = min(config.CALIBRATION_WINDOWS, pre_drift_windows)
     calibration_window_count = max(calibration_window_count, warmup_windows + 1)
@@ -86,11 +94,19 @@ def calibrate_detectors(best_model, reference_data, calibration_stream):
     )
 
     thresholds = {
-        "shap_threshold": _safe_quantile(shap_distances, config.CALIBRATION_QUANTILE, config.SHAP_DRIFT_THRESHOLD),
-        "psi_warning": _safe_quantile(psi_scores, config.PSI_WARNING_QUANTILE, config.PSI_WARNING_THRESHOLD),
-        "psi_alert": _safe_quantile(psi_scores, config.PSI_ALERT_QUANTILE, config.PSI_ALERT_THRESHOLD),
+        "shap_threshold": _safe_quantile(
+            shap_distances, config.CALIBRATION_QUANTILE, config.SHAP_DRIFT_THRESHOLD
+        ),
+        "psi_warning": _safe_quantile(
+            psi_scores, config.PSI_WARNING_QUANTILE, config.PSI_WARNING_THRESHOLD
+        ),
+        "psi_alert": _safe_quantile(
+            psi_scores, config.PSI_ALERT_QUANTILE, config.PSI_ALERT_THRESHOLD
+        ),
         # KS detector flags lower p-values as drift. Use lower-tail quantile from clean data.
-        "ks_alpha": _safe_quantile(ks_scores, 1 - config.CALIBRATION_QUANTILE, config.KS_ALPHA),
+        "ks_alpha": _safe_quantile(
+            ks_scores, 1 - config.CALIBRATION_QUANTILE, config.KS_ALPHA
+        ),
         "warmup_windows": warmup_windows,
         "calibration_windows": calibration_window_count,
     }
@@ -116,8 +132,11 @@ def build_window_ground_truth(drift_type, n_samples, n_windows):
 
 def bootstrap_directories():
     dirs = [
-        config.DATA_DIR, config.MODELS_DIR, config.RESULTS_DIR,
-        config.PLOTS_DIR, config.SHAP_DIR,
+        config.DATA_DIR,
+        config.MODELS_DIR,
+        config.RESULTS_DIR,
+        config.PLOTS_DIR,
+        config.SHAP_DIR,
     ]
     for d in dirs:
         d.mkdir(parents=True, exist_ok=True)
@@ -176,7 +195,9 @@ def run_training_phase(data_variants, feature_names):
     save_best_model(best_name, best_model)
 
     # Use raw train/test for EDA distributions; model metrics come from each suite payload.
-    run_full_eda(X_train_raw, X_test, y_train_raw, y_test, combined_results, feature_names)
+    run_full_eda(
+        X_train_raw, X_test, y_train_raw, y_test, combined_results, feature_names
+    )
 
     log.info("Unified training phase complete, global best model is %s", best_name)
     return best_name, best_model, combined_results
@@ -242,7 +263,9 @@ def run_drift_experiment(best_model, X_train, X_test, feature_names):
             ensemble_flags = build_ensemble_flags(shap_flags, psi_flags, ks_flags)
 
             n_windows = len(shap_distances)
-            ground_truth = build_window_ground_truth(drift_type, len(drifted_stream), n_windows)
+            ground_truth = build_window_ground_truth(
+                drift_type, len(drifted_stream), n_windows
+            )
 
             summary_df = evaluate_all_detectors(
                 {
@@ -258,13 +281,15 @@ def run_drift_experiment(best_model, X_train, X_test, feature_names):
 
             for _, row in summary_df.iterrows():
                 prefix = row["detector"]
-                mlflow.log_metrics({
-                    f"{prefix}_f1":      row["f1"],
-                    f"{prefix}_fpr":     row["fpr"],
-                    f"{prefix}_fnr":     row["fnr"],
-                    f"{prefix}_latency": row["latency"],
-                    f"{prefix}_cost":    row["cost"],
-                })
+                mlflow.log_metrics(
+                    {
+                        f"{prefix}_f1": row["f1"],
+                        f"{prefix}_fpr": row["fpr"],
+                        f"{prefix}_fnr": row["fnr"],
+                        f"{prefix}_latency": row["latency"],
+                        f"{prefix}_cost": row["cost"],
+                    }
+                )
             mlflow.log_param("drift_type", drift_type)
             mlflow.log_param("shap_threshold", thresholds["shap_threshold"])
             mlflow.log_param("psi_warning_threshold", thresholds["psi_warning"])
@@ -275,21 +300,31 @@ def run_drift_experiment(best_model, X_train, X_test, feature_names):
             mlflow.log_param("ensemble_rule", "majority_vote_2_of_3")
 
             explainer = build_explainer(best_model, X_train)
-            last_window = drifted_stream[-config.STREAM_WINDOW_SIZE:]
+            last_window = drifted_stream[-config.STREAM_WINDOW_SIZE :]
             drifted_shap = compute_mean_shap_vector(explainer, last_window)
 
             shap_snapshots = [
                 compute_mean_shap_vector(
                     explainer,
-                    drifted_stream[i * config.STREAM_WINDOW_SIZE : (i + 1) * config.STREAM_WINDOW_SIZE]
+                    drifted_stream[
+                        i * config.STREAM_WINDOW_SIZE : (i + 1)
+                        * config.STREAM_WINDOW_SIZE
+                    ],
                 )
                 for i in range(n_windows)
             ]
 
             run_all_plots(
-                shap_distances, psi_scores, ks_scores,
-                shap_snapshots, reference_shap, drifted_shap,
-                summary_df, all_summaries, feature_names, drift_type
+                shap_distances,
+                psi_scores,
+                ks_scores,
+                shap_snapshots,
+                reference_shap,
+                drifted_shap,
+                summary_df,
+                all_summaries,
+                feature_names,
+                drift_type,
             )
 
             log.info("%s drift experiment complete", drift_type)
@@ -319,24 +354,30 @@ def export_results(all_summaries):
         index=False,
         float_format="%.4f",
         caption="Drift Detector Performance Across Drift Types",
-        label="tab:results"
+        label="tab:results",
     )
 
-    # summary json 
+    # summary json
     last_summary = list(all_summaries.values())[-1]
     summary = {
-        "generated_at":              datetime.now().isoformat(),
-        "best_detector_by_f1":       last_summary.loc[last_summary["f1"].idxmax(),      "detector"],
-        "best_detector_by_cost":     last_summary.loc[last_summary["cost"].idxmin(),     "detector"],
-        "best_detector_by_latency":  last_summary.loc[last_summary["latency"].idxmin(),  "detector"],
+        "generated_at": datetime.now().isoformat(),
+        "best_detector_by_f1": last_summary.loc[
+            last_summary["f1"].idxmax(), "detector"
+        ],
+        "best_detector_by_cost": last_summary.loc[
+            last_summary["cost"].idxmin(), "detector"
+        ],
+        "best_detector_by_latency": last_summary.loc[
+            last_summary["latency"].idxmin(), "detector"
+        ],
         "per_drift_type": {
             drift_type: {
-                "best_f1":      df.loc[df["f1"].idxmax(),     "detector"],
-                "lowest_cost":  df.loc[df["cost"].idxmin(),   "detector"],
-                "fastest":      df.loc[df["latency"].idxmin(),"detector"],
+                "best_f1": df.loc[df["f1"].idxmax(), "detector"],
+                "lowest_cost": df.loc[df["cost"].idxmin(), "detector"],
+                "fastest": df.loc[df["latency"].idxmin(), "detector"],
             }
             for drift_type, df in all_summaries.items()
-        }
+        },
     }
 
     with open(export_dir / "summary.json", "w") as f:
@@ -350,12 +391,16 @@ def main():
     feature_names = get_feature_names()
     data_variants = load_data_variants()
 
-    best_name, best_model, training_results = run_training_phase(data_variants, feature_names)
+    best_name, best_model, training_results = run_training_phase(
+        data_variants, feature_names
+    )
 
     raw_train_split = data_variants["raw"]
     X_train_reference, X_test_stream, _, _ = raw_train_split
 
-    all_summaries = run_drift_experiment(best_model, X_train_reference, X_test_stream, feature_names)
+    all_summaries = run_drift_experiment(
+        best_model, X_train_reference, X_test_stream, feature_names
+    )
     export_results(all_summaries)
 
     log.info("Pipeline finished with global best model: %s", best_name)

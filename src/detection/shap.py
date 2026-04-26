@@ -5,7 +5,9 @@ from scipy.spatial.distance import cosine
 
 import config
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(levelname)s  %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s  %(levelname)s  %(message)s"
+)
 log = logging.getLogger(__name__)
 
 
@@ -25,7 +27,7 @@ def compute_mean_shap_vector(explainer, window_data):
     """Returns the mean absolute SHAP value per feature for a window of samples."""
     shap_values = explainer.shap_values(window_data)
 
-    # TreeExplainer returns a list 
+    # TreeExplainer returns a list
     if isinstance(shap_values, list):
         shap_values = shap_values[1]
 

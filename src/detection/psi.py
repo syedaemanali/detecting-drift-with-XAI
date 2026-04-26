@@ -3,7 +3,9 @@ import numpy as np
 
 import config
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(levelname)s  %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s  %(levelname)s  %(message)s"
+)
 log = logging.getLogger(__name__)
 
 N_BINS = 10
@@ -53,8 +55,12 @@ def detect_psi_drift(
     n_windows = len(stream_data) // window_size
     n_features = reference_data.shape[1]
 
-    active_warning = config.PSI_WARNING_THRESHOLD if warning_threshold is None else warning_threshold
-    active_alert = config.PSI_ALERT_THRESHOLD if alert_threshold is None else alert_threshold
+    active_warning = (
+        config.PSI_WARNING_THRESHOLD if warning_threshold is None else warning_threshold
+    )
+    active_alert = (
+        config.PSI_ALERT_THRESHOLD if alert_threshold is None else alert_threshold
+    )
 
     weights = None
     if feature_weights is not None:
@@ -74,7 +80,11 @@ def detect_psi_drift(
             compute_psi_single_feature(reference_data[:, f], window[:, f])
             for f in range(n_features)
         ]
-        mean_psi = np.average(feature_psi, weights=weights) if weights is not None else np.mean(feature_psi)
+        mean_psi = (
+            np.average(feature_psi, weights=weights)
+            if weights is not None
+            else np.mean(feature_psi)
+        )
         psi_scores.append(mean_psi)
 
         raw_flags.append(mean_psi >= active_alert)

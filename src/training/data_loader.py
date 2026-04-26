@@ -10,7 +10,9 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 import config
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(levelname)s  %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s  %(levelname)s  %(message)s"
+)
 log = logging.getLogger(__name__)
 
 
@@ -102,10 +104,7 @@ def _split_dataframe(df, apply_smote=True):
     y = df[config.TARGET_COL].values
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y,
-        test_size=config.TEST_SIZE,
-        random_state=config.RANDOM_STATE,
-        stratify=y
+        X, y, test_size=config.TEST_SIZE, random_state=config.RANDOM_STATE, stratify=y
     )
 
     if apply_smote:

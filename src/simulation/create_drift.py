@@ -3,7 +3,9 @@ import numpy as np
 
 import config
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(levelname)s  %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s  %(levelname)s  %(message)s"
+)
 log = logging.getLogger(__name__)
 
 
@@ -28,7 +30,9 @@ def sample_drift_mask(n_samples, drift_type, period=100, drift_fraction=0.5):
                 mask[i] = True
         return mask
 
-    raise ValueError(f"Unknown drift type {drift_type}, choose from {list(DRIFT_FUNCTIONS)}")
+    raise ValueError(
+        f"Unknown drift type {drift_type}, choose from {list(DRIFT_FUNCTIONS)}"
+    )
 
 
 def sudden_drift(data):
@@ -82,19 +86,23 @@ def incremental_drift(data):
     for i, idx in enumerate(range(start, len(out))):
         out[idx] += step_size * (i + 1) * feature_std
 
-    log.info("Incremental drift injected from index %d growing step %.6f", start, step_size)
+    log.info(
+        "Incremental drift injected from index %d growing step %.6f", start, step_size
+    )
     return out
 
 
 DRIFT_FUNCTIONS = {
-    "sudden":      sudden_drift,
-    "gradual":     gradual_drift,
-    "recurring":   recurring_drift,
+    "sudden": sudden_drift,
+    "gradual": gradual_drift,
+    "recurring": recurring_drift,
     "incremental": incremental_drift,
 }
 
 
 def apply_drift(data, drift_type):
     if drift_type not in DRIFT_FUNCTIONS:
-        raise ValueError(f"Unknown drift type {drift_type}, choose from {list(DRIFT_FUNCTIONS)}")
+        raise ValueError(
+            f"Unknown drift type {drift_type}, choose from {list(DRIFT_FUNCTIONS)}"
+        )
     return DRIFT_FUNCTIONS[drift_type](data)
